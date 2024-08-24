@@ -1,0 +1,176 @@
+---
+title: Building autograd engine (tinytorch) 04
+date: '2023-09-29'
+tags: [autograd, ML, GPT, language model, tinytorch, pytorch, numpy]
+summary: Building my own dl framework name tinytorch,
+authors: ['default']
+---
+
+part 4/n
+
+# Broadcasting
+
+when we any operation on 2 diffrent shape numpy automatially reshape and clone things and give us result
+
+```python
+x = np.array([1,2,3])
+x = np.array([4])
+z = x*y
+print(z)
+# output
+# np.array([4,8,12])
+```
+
+This is greate but is messup our backward pass, graident will be in shape of output not input.
+
+```python
+if __name__ == "__main__":
+    x = Tensor([1,2,3])
+    y = Tensor([4])
+    z = x*y
+    z.backward(ones(z.shape)) # don't forget this
+    print(f"X: {x} grad: {x.grad}")
+    print(f"Y: {y} grad: {y.grad}")
+```
+
+```bash output
+X: tensor([1 2 3]) grad: tensor([4. 4. 4.])
+Y: tensor([4]) grad: tensor([1. 2. 3.]) # this should be tensor([6.])
+```
+
+now grad output of y should be should be just `tensor([6.])`, we can fix this by doing sum on axis=0
+
+lets write undo broadcast which well undos the bradcasting
+
+```python
+
+class Tensor:
+    ...
+    def _undo_broadcast(self, tensor: Tensor, grad: Tensor):
+        data = tensor.data
+        grad = grad.data
+        while data.shape != grad.shape:
+            grad = grad.sum(axis=0, keepdims=(len(grad.shape) == 1))
+        return Tensor(grad)
+```
+
+here we will get original tensor and its grad, while sum along axis=0 (The first axis) untill shapes macth.
+When you to arr.sum() in numpy if the dim of array is 1 that is if array.shape = (4,) ,(21,) or (n,) it return ().
+for this special case we want to keep dims as it is. so `keepdims=(len(grad.shape) == 1)` This will keep 1d array in shape.
+
+Lets call undobroadcat in
+one more this backward should only be called on 0d tensor (ie scaler) if you don't pass grads.
+so lets modify backward
+
+```python
+    def backward(self, grad=None):
+        if self._ctx is None:
+            return
+
+        if grad is None:
+            if self.data.size != 1: # add this for for non zero tensors
+                raise ValueError("backward cannot be called on non zero tensor")
+            grad = Tensor([1.0])
+            self.grad = grad
+
+        op = self._ctx.op
+        child_nodes = self._ctx.args
+
+        grads = op.backward(self._ctx, grad)
+        if len(self._ctx.args) == 1:
+            grads = [grads]
+
+        for tensor, grad in zip(child_nodes, grads):
+            if grad is None:
+                continue
+            grad = self._undo_broadcast(tensor, grad) # <=  here we call fix this
+            if tensor.grad is None:
+                tensor.grad = Tensor(np.zeros_like(tensor.data))
+            tensor.grad += grad.detach()
+            tensor.backward(grad)
+
+```
+
+Now It should work
+
+```bash
+❯ python3 tinytorch.py
+X: tensor([1 2 3]) grad: tensor([4. 4. 4.])
+Y: tensor([4]) grad: tensor([6.])
+```
+
+commit `5d276eef19cfb1d8150e4bb10f10c828f09f6cf5`
+
+## Lets go!!!
+
+## Requires grad ??
+
+you have seen in pytorch we only calc gradient when we pass requires grad = True. This avoid backward on unneassy graph. Lets impliment it.
+
+Lets start by modifying tensor class
+
+```python
+
+class Tensor:
+    def __init__(self, data, requires_grad=False):
+        self.data: np.ndarray = Tensor._data_to_numpy(data)
+        self.grad: Tensor = None
+        self._ctx: Function = None
+        self.requires_grad: bool = requires_grad
+
+
+    def clone(self,requires_grad=False) -> Tensor:
+        return Tensor(self.data.clone(),requires_grad=requires_grad)
+```
+
+Now lets moify function class. will add only those node who
+
+- have requires_grad
+- have ctx (indicating they are genrated by some op)
+
+```python
+class Function:
+    ...
+    @classmethod
+    def apply(cls, *args):
+        ctx = Function(cls, *args)
+        result = cls.forward(*args)
+        if Function._is_part_of_graph(ctx):
+            result._ctx = ctx
+        return result
+
+    @staticmethod
+    def _is_part_of_graph(ctx: Function):
+        for node in ctx.args:
+            if isinstance(node, Tensor) and (node.requires_grad or node._ctx is not None):
+                return True
+        return False
+```
+
+whis will prune all node that don't need backward pass
+
+```python tensor.py
+if __name__ == "__main__":
+    x = Tensor([1, 2, 3])
+    y = Tensor([4])
+    z = x * y
+    z.backward(ones(z.shape))  # don't forget this
+    print(f"X: {x} grad: {x.grad}")
+    print(f"Y: {y} grad: {y.grad}")
+
+    print("="*100)
+    x = Tensor([1, 2, 3],requires_grad=True)
+    y = Tensor([4],requires_grad=True)
+    z = x * y
+    z.backward(ones(z.shape))  # don't forget this
+    print(f"X: {x} grad: {x.grad}")
+    print(f"Y: {y} grad: {y.grad}")
+```
+
+```bash output
+X: tensor([1 2 3]) grad: None
+Y: tensor([4]) grad: None
+====================================================================================================
+X: tensor([1 2 3]) grad: tensor([4. 4. 4.])
+Y: tensor([4]) grad: tensor([6.])
+```
