@@ -14,6 +14,16 @@ const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
 const discussUrl = (path) =>
   `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
 
+const tweetUrl = (path, title) => {
+  const encodedTitle = encodeURIComponent(`Check out this article: ${title}`)
+  let encodedUrl = encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)
+
+  // Replace %2D with -
+  encodedUrl = encodedUrl.replace(/%2D/g, '-')
+
+  return `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`
+}
+
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   year: 'numeric',
@@ -96,11 +106,12 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             <div className="divide-y divide-gray-200 dark:divide-gray-700 xl:col-span-3 xl:row-span-2 xl:pb-0">
               <div className="prose max-w-none pb-8 pt-10 dark:prose-invert">{children}</div>
               <div className="pb-6 pt-6 text-sm text-gray-700 dark:text-gray-300">
-                <Link href={discussUrl(path)} rel="nofollow">
+                {`   ( ˶ᵔ ᵕ ᵔ˶ )   `}
+                <Link href={tweetUrl(path, title)} target="_blank" rel="noopener noreferrer">
                   Discuss on Twitter
                 </Link>
-                {` • `}
-                <Link href={editUrl(filePath)}>View on GitHub</Link>
+
+                {/* <Link href={editUrl(filePath)}>View on GitHub</Link> */}
               </div>
               {siteMetadata.comments && (
                 <div

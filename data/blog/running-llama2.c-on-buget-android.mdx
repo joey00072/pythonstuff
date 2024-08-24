@@ -1,0 +1,137 @@
+---
+title: 'Running LLama2.c on Buget Android'
+date: '2023-07-25'
+tags: ['LLM', ML, GPT, language model, edge, termux, android]
+draft: false
+summary: 'Explore the process of running lama2.c on a budget Android device using Termux. Learn about setup, installation, practical guide.'
+authors: ['default']
+---
+
+
+So I recently ran LLM on my phone. [Andrej
+Karpathy](https://twitter.com/karpathy) create this awesome
+repo called [llama2.c](https://github.com/karpathy/llama2.c). I tried to run
+this on my buget android, made tweet about. It went mini viral I say. And I
+also received reply from legend himself .
+
+> Running
+> @karpathy
+> llama.c on budget Android.  
+> 44m model 🤌
+> [pic.twitter.com/iXgAaCSy7m](https://t.co/iXgAaCSy7m)
+>
+> -- Joey (e/λ) (@shxf0072) [July 24,
+> 2023](https://twitter.com/shxf0072/status/1683508670263595008?ref_src=twsrc%5Etfw)
+
+This is blog I'll go over how did I do it and how can you replicate to
+
+_If you have any quesions comments or just want to chat, my twitter [@shxf0072](https://twitter.com/shxf0072) _
+
+## Brief about llama.2c
+
+[llama2.c ](https://github.com/karpathy/llama2.c) has one
+single c file to inference llama modes. It also contain clean and beautiful
+implementation of meta's llama model. Watch [this
+video](https://www.youtube.com/watch?v=kCc8FmEb1nY&t=1678s)
+on nanoGPT. Llama code is little different but you can understand it.
+
+### Running it on Android
+
+Since llama.c is single c file with no dependency is fairly easy to compile.
+So thought lets run it on android. I have moto g62 buget android phone (about
+$185).
+
+### Termux
+
+![](/static/images/7187543b-fe7e-49a5-85b2-53ae6665ff9f.jpeg)
+
+[Termux](https://github.com/termux/termux-app) is an open-
+source Android application that provides a powerful Linux command line
+environment. It simulates linux system that you can run anything be it python,
+c or go. This is not full linux It has lot of limitations.
+
+### Installtion:
+
+You need to install F-droid ( open source alternative for playstore) and
+install termux from their ->
+[https://f-droid.org/en/packages/com.termux/](https://f-droid.org/en/packages/com.termux/)
+
+_DO NOT INSTALL TERMUX FROM PLAYSTORE (its deprecated)_
+
+Ones it install you will see familiar bash termux. Termux has its own package
+manager `pkg`. don't run of wild yet. (Fancy autocomplete at the end)
+
+First run cammand `termux-change-repo`, Select ok, Then change mirror to
+Default host with CloudFlare, defalut repo is not working so you have to
+change it to mirror, try diffrent mirrors if cloud flare doesn’t work.
+
+![](/static/images/19eebfd2-0125-4c0b-9836-e6d9d0ddac22.jpeg)
+
+After This do
+
+```bash
+pkg update # Just press enter is any prompt comes up
+pkg upgrade #just press enter is any prompt comes up
+pkg install -y clang git wget openssl vim
+```
+
+Now Clone llama2.c
+
+```bash
+git clone https://github.com/karpathy/llama2.c.git
+```
+
+cd into it
+
+`cd llama2.c`
+
+![](/static/images/c15c65be-40eb-4492-b842-223e5664fd11.jpeg)
+
+Now Donlaod The Model weights.
+
+```bash
+wget https://karpathy.ai/llama2c/model44m.bin -P out44m
+```
+
+Now We Compile and run it
+
+Compile :
+
+```bash
+clang -Ofast -fopenmp -march=native run.c -lm -o run
+```
+
+(gcc is not supported in temux must use clang)
+
+Run it 🚀
+
+```bash
+OMP_NUM_THREADS=4 ./run out44m/model44m.bin
+```
+
+Set Threads values according to num of core your phone have ( usually between
+4-8)
+
+![](/static/images/258dfb04-90a5-4dd5-9a3c-09c6f9d1d214.jpeg)
+
+#### About Fancy logo and autocomplete:
+
+If you want android logo install neoftech
+
+```bash
+pkg install neoftech
+```
+
+and run neofetch
+
+```bash
+neofetch
+```
+
+![](/static/images/7187543b-fe7e-49a5-85b2-53ae6665ff9f-2.jpeg)
+
+I installed zsh shell and ohmyzsh and zsh-autosuggetion for autocomplete
+
+if you want to install those follow this
+
+repo:[https://github.com/joey00072/dotfiles](https://github.com/joey00072/dotfiles)

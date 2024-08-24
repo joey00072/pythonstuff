@@ -1,0 +1,317 @@
+---
+title: Building autograd engine (tinytorch) 01
+date: '2023-08-27'
+tags: [autograd, ML, GPT, language model, tinytorch, pytorch, numpy]
+summary: Building my own dl framework name tinytorch,
+authors: ['default']
+---
+
+part 1/n
+
+Its weekend, and I am going to build my own autograd engine. I have done this ones before so I shoudnt be problem.
+started with empty git repo, I will keep commiting without any rebase so in case someone go back they can see eveything.
+
+this is dev blog, I'll try to write explaination to you can recreate it
+I'm not used to writing tutorials to DM me on [@shxf0072](https://twitter.com/shxf0072) twitter (X now), If I f something up
+all code will be at [github.com/joey00072/tinytorch](https://github.com/joey00072/tinytorch). I'll leave commits in blog so do `git checkout COMMIT_ID` to go to that point.
+
+## tinytorch
+
+Lets start with Tensor warpper around numpy
+
+```python
+import numpy as np
+
+
+class Tensor:
+    def __init__(self,data):
+        self.data = data if isinstance(data,np.ndarray) else np.array(data)
+
+    def __add__(self,other):
+        return Tensor(self.data + other.data)
+
+    def __mul__(self,other):
+        return Tensor(self.data + other.data)
+
+    def __repr__(self):
+        return f"tensor({self.data})"
+
+
+if __name__ == "__main__":
+    x = Tensor([8])
+    y = Tensor([5])
+    z = x+y
+
+    print(z)
+
+```
+
+yay now we can add two tenors now
+**add** adds + to Tensor class if you dont know about this, search about "magic mathod in python"
+
+and my friends called me up for valorant so I'll be back in 2hr or so (20:02 19-08-2023 )
+
+Back (23:02 19-08-2023 )
+
+### Add & MUL
+
+`don't worry about math code is easy`
+
+derivatve of anything with itsed is 1 for f(x) = x fo d/dx = 1
+
+Let's start with addition. If you have the function
+
+$$
+f(x) = x + 10
+$$
+
+its derivative will be 1, since $\frac{{d(x)}}{{dx}} = 1$ the derivative of a constant is 0, and the derivative of $10$ is $0$. So $1 + 0 = 1$.
+
+$f(x,y) = x + y$
+
+For two variables:
+
+$$
+f(x,y) = x + y
+$$
+
+with respect to $x$:
+
+$$
+\frac{{d(x)}}{{dx}} = 1 \text{ and } \frac{{d(y)}}{{dx}} = 0 \text{ since } y \text{ is constant, } 1 + 0 = 1,
+$$
+
+with respect to $y$:
+
+$$
+\frac{{d(x)}}{{dx}} = 0 \text{ and } \frac{{d(y)}}{{dx}} = 1 \text{ since } y \text{ is constant, } 0 + 1 = 1.
+$$
+
+so if $x =10$ & $y = 20$
+
+$$
+f(x,y) = x+y \\
+\\
+
+\frac{{f(x,y)}}{{dx}} = 1
+\space \& \space
+\frac{{f(x,y)}}{{dy}} = 1
+
+
+$$
+
+![Alt text](/static/images/cgraph-01.png)
+
+![Alt text](/static/images/cgraph-02.png)
+
+    noice adding give equial graidnt back to both node
+    since z has grident 1, x and y got both grident 1 this will be usefull in residual connections in transformers
+
+#### MUL
+
+Now, let's consider multiplication. If you have the function
+
+$$
+g(x) = x \cdot 10,
+$$
+
+its derivative will be 10, since $\frac{{d(x)}}{{dx}} = 10$ and the derivative of 10 is 0. So $10 \cdot 1  = 10$.
+
+$f(x,y) = x \cdot y$
+
+For two variables:
+
+$$
+f(x,y) = x \cdot  y
+\\
+x=10 \space \And y =20
+$$
+
+with respect to $x$:
+
+$$
+\frac{{d(x)}}{{dx}} = 1 \cdot 20 = 20\space
+$$
+
+with respect to $y$:
+
+$$
+\space \frac{{d(y)}}{{dx}} = 10 \cdot 1 = 10 ,
+$$
+
+![Alt text](/static/images/cgraph-03.png)
+
+    Noice in this case derivative or x have value of y (20) and derivate of y have value of x (10)
+
+Lets code
+
+we will create Add MUL and Funtion class move operation login in foward methoed of each class and store value of args in Function.args for backward
+
+```python
+
+class Function:
+    def __init__(self,op,*args):
+        self.op = op
+        self.args = args
+
+class Add:
+    @staticmethod
+    def forward(x,y):
+        return Tensor(x.data + y.data)
+
+    @staticmethod
+    def backward(ctx,grad):
+        x,y = ctx.args
+        return Tensor([1]) ,Tensor([1])
+
+class Mul:
+    @staticmethod
+    def forward(x,y):
+        return Tensor(x.data * y.data) # z = x*y
+
+    @staticmethod
+    def backward(ctx,grad):
+        x,y = ctx.args
+        return  Tensor(y.data), Tensor(x.data) #  dz/dx, dz/dy
+
+```
+
+Functions class is to store will funtion/operation that we have applied
+so if we add x=10 and y = 20, funtion will have fn.op = Add abd fn.args = (10,20)
+
+we pass function object as context to backward when we will get original args back when we doing backward pass
+
+Lets modify **add** and **mul**
+
+```python
+
+class Tensor:
+    def __init__(self,data):
+        self.data = data if isinstance(data,np.ndarray) else np.array(data)
+        self._ctx = None
+
+    def __add__(self,other):
+        fn = Function(Add,self,other)
+        result = Add.forward(self,other)
+        result._ctx = fn
+        return result
+
+    def __mul__(self,other):
+        fn = Function(Mul,self,other)
+        result = Mul.forward(self,other)
+        result._ctx = fn
+        return result
+
+
+    def __repr__(self):
+        return f"tensor({self.data})"
+```
+
+So when you do some op
+
+1. fist store all info related to that op in Function Object
+2. than do the op.forward
+3. store all information in result node
+4. return result
+
+If you want to see this this graph
+creare new `visualize.py` file
+
+```bash
+pip install graphviz
+sudo apt-get install -y graphviz # IDK what to do for windows I use wsl
+```
+
+```python visualize.py
+import graphviz
+from tinytorch import *
+
+G = graphviz.Digraph(format='png')
+G.clear()
+def visit_nodes(G:graphviz.Digraph,node:Tensor):
+    uid = str(id(node))
+    G.node(uid,f"Tensor: {str(node.data) } ")
+    if node._ctx:
+        ctx_uid = str(id(node._ctx))
+        G.node(ctx_uid,f"Context: {str(node._ctx.op.__name__)}")
+        G.edge(uid,ctx_uid)
+        for child in node._ctx.args:
+            G.edge(ctx_uid,str(id(child)))
+            visit_nodes(G,child)
+
+
+if __name__ == "__main__":
+    x = Tensor([8])
+    y = Tensor([5])
+    z = x+y
+    visit_nodes(G,z)
+    G.render(directory="vis",view=True)
+    print(z)
+
+    print(len(G.body))
+
+```
+
+```python tinytorch.py
+import numpy as np
+
+class Tensor:
+    def __init__(self,data):
+        self.data = data if isinstance(data,np.ndarray) else np.array(data)
+        self._ctx = None
+
+    def __add__(self,other):
+        fn = Function(Add,self,other)
+        result = Add.forward(self,other)
+        result._ctx = fn
+        return result
+
+    def __mul__(self,other):
+        fn = Function(Mul,self,other)
+        result = Mul.forward(self,other)
+        result._ctx = fn
+        return result
+
+
+    def __repr__(self):
+        return f"tensor({self.data})"
+
+class Function:
+    def __init__(self,op,*args):
+        self.op = op
+        self.args = args
+
+class Add:
+    @staticmethod
+    def forward(x,y):
+        return Tensor(x.data + y.data)
+
+    @staticmethod
+    def backward(ctx,grad):
+        x,y = ctx.args
+        return Tensor([1]),Tensor([1])
+
+class Mul:
+    @staticmethod
+    def forward(x,y):
+        return Tensor(x.data * y.data) # z = x*y
+
+    @staticmethod
+    def backward(ctx,grad):
+        x,y = ctx.args
+        return  Tensor(y.data), Tensor(x.data) #  dz/dx, dz/dy
+
+if __name__ == "__main__":
+    x = Tensor([8])
+    y = Tensor([5])
+    z = x*y
+    print(z)
+
+```
+
+![Alt text](/static/images/cgraph-04.png)
+
+Till commit `dc11629`
+https://github.com/joey00072/tinytorch
+
+sleeping now backprop tomorrow
