@@ -12,8 +12,10 @@ authors: ['default']
 This is a micro dev blog on how to build a micro Jax / mlx-like transformation engine,
 because I don't find anything easy that explains function transformation engines on the internet. Just like Karpathy-senpai's micrograd is a simple version of PyTorch, microjax is a simpler version of Jax.
  
-Github: [microjax](https://github.com/joey00072/microjax) -  leave a ⭐ if you find this useful.<br></br>
-DM me on twitter [@shxf0072](https://x.com/shxf0072) if you have any questions/corrections.<br></br>
+- Github: [microjax](https://github.com/joey00072/microjax) -  leave a ⭐ if you find this useful.<br></br>
+- [Notebook](https://github.com/joey00072/microjax/blob/master/tutorial.ipynb): learn step by step 😉 <br></br>
+- DM me on twitter [@shxf0072](https://x.com/shxf0072) if you have any questions/corretions.<br></br>
+
 Warning: This is made for understanding with incrementally increasing complexity, not absolute correctness.<br></br>
 
  
@@ -470,7 +472,7 @@ values is called primal and its derivative is called tangent.
 
 when you have function f(x) = sin(x) its derivate is denoted by slope of tangent line at that point. as each point slopes changes this changes are define by gradient function. so although we get derivative of sin(x) at primal point x by using cos(x) we call it tangent. it suppose to indicate slope of tangent line at that point. 
 
-![image.png](tutorial_files/image.png)
+![image.png](/static/images/microjax_jvp1.png)
 
 We will define rules for each primitive operation. 
 
@@ -531,8 +533,8 @@ class JVPRules:
 
 Now for our first real interpreter. We are boxing values and its tangent. at first we will unbox values, and process this primals and tangents. then we will box the result.
 
-![image.png](/static/images/microjax_jvp1.png)
 
+![image-2.png](/static/images/microjax_box2.png)
 
 ```python
 class JVPInterpreter(Interpreter):
@@ -631,7 +633,7 @@ print(deriv_func2(x))
 
 we get double derivative or hessian 
 
-![image-2.png](/static/images/microjax_box2.png)
+![image-2.png](/static/images/microjax_box3.png)
 
 Whats is happening here is we are double boxing values, `BOX2( BOX1(primal, derv1), derv2 )`, But since function are closed under composition we can compose derv arbaritary many times,
 
