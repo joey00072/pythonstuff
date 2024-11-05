@@ -18,6 +18,11 @@ because I don't find anything easy that explains function transformation engines
 
 Warning: This is made for understanding with incrementally increasing complexity, not absolute correctness.<br></br>
 
+
+Now there exits Autodidax, but its pretty hard, with heavy words and lambda functions.
+![image.png](/static/images/microjax_k.png)
+
+I had idea bcs of this :3, hance microjax
  
 Way back, Google was TensorFlow-pilled. Google has a custom chip TPU and XLA, a really smart linear algebra compiler to make it go brr, but TensorFlow was awful to work with. Other growing frameworks like PyTorch had a dynamic nature that wasn't that great. Jax was an experimental project from Google that converts Python traces to XLA, which can be compiled with MLIR and run on accelerators like GPUs and TPUs. We can divide Jax into two parts: function transformation and XLA compiler. Function transformation gives us the ability to calculate gradients, Hessians, and define vmap-like transformations, while XLA IR conversion gives us speed. Here we will only cover a simple function transformation engine, so the X part of Jax is not here, but hey, MLX has X so I don't care, I'm calling it microjax. Although Jax has gone more mainstream recently, the story of Jax goes back to autograd.
  
