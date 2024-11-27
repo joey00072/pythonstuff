@@ -1,0 +1,132 @@
+---
+title: OCT-24 Things I've Read
+date: '2024-11-01'
+tags: ['ML', 'papers', 'Machine Learning']
+images: /static/images/photo_2021-01-17_18-57-11.jpg
+summary: short notes on things I've read
+authors: ['default']
+---
+
+small notes on things I've read in october 2024
+
+### **Rethinking Softmax- Self-Attention with Polynomial Activations**
+
+Paper argues softmax is not a special operation, it works because it acts as regularizer Frobenius norm (`frobenius_norm = x.square().sum()`) for attention matrix 
+
+![Screenshot showing polynomial activations](/static/images/Screenshot_2024-11-25_at_7.51.50_PM.png)
+
+IMO,
+
+this just proves that making models big and stabilizing training makes them just work.
+
+Architecture doesn't matter as much. They also mention for vision their method worked better than language. So softmax is still special :?
+
+Yeah paper is good, but conclusion should be train bigger model with reasonable activation and it will work.
+
+[Read the paper](https://arxiv.org/abs/2410.18613)
+
+### **Sparse Crosscoders for Cross-Layer Features and Model Diffing**
+
+![Screenshot of crosscoders architecture](/static/images/Screenshot_2024-11-25_at_7.55.57_PM.png)
+
+Anthropic is ssly cooking in mech interpretability side, cross coders are more generalization of SAE, it's naturally continuation of idea that content is not stored in single layer but across layers and if they are linearly separable we can interpret them.
+
+[Read more](https://transformer-circuits.pub/2024/crosscoders/index.html)
+
+### **HOW TO EVALUATE REWARD MODELS FOR RLHF**
+
+Does the reward model lead to good post-RLHF language model performance? 
+
+YES duh,
+
+Paper introduces new benchmark for reward model Preference Proxy Evaluations (PPE), nothing else special to point out but new benchmark good. RewardBench is overused.
+
+[Read the paper](https://arxiv.org/pdf/2410.14872)
+
+### **Entropix**
+
+![Screenshot of Entropix architecture](/static/images/entropix.png)
+
+[xjdr](https://x.com/_xjdr) and [doomslide](https://x.com/doomslide) cooked this awesome idea. sample from llm based on entropy 
+and varentropy. lm have inate abality to express uncertainty to express its uncertainty. use it to create better sampler. 
+its under explored area and maybe o1 uses some of this concept (just guessing).
+[hrishioa](https://x.com/hrishioa) put nice explaintion blog [Entropixplained](https://southbridge-research.notion.site/Entropixplained-11e5fec70db18022b083d7d7b0e93505#11e5fec70db180fb9d94ef592acf4f36)
+
+[View on GitHub](https://github.com/xjdr-alt/entropix)
+
+
+### **THINKING LLMS -  GENERAL INSTRUCTION FOLLOWING WITH THOUGHT**
+
+Paper was trying to ride O1 hype train, they used DPO with CoT
+
+1. LM to generate n responses with think prompt
+2. Judge model ranks outputs (not thought)
+3. DPO on highest with lowest rank (including CoT)
+
+Named method Thought Preference Optimization (TPO) cause hype.
+
+[Read the paper](https://arxiv.org/pdf/2410.10630)
+
+### **Sabotage evaluations for frontier models**
+
+Did they find anything harming, NO. They put sabotage into 4 groups: human decision sabotage, code, sandbagging and undermining oversight. But I get this feeling they try to create paranoia and fear. But nice work by Anthropic, safety is important.
+
+[Read the research](https://www.anthropic.com/research/sabotage-evaluations)
+
+### **Meta Lingua**
+
+Minimal LLM training code by Meta 🤌, code is clean and joy to read.
+![Meta Lingua architecture diagram](/static/images/image.png)
+
+[View on GitHub](https://github.com/facebookresearch/lingua)
+
+### **Nasty Grad Accumulation BUG**
+
+![Screenshot showing gradient accumulation bug](/static/images/grad_bug.jpeg)
+There was bug in micro batch implementation and the goat [**Daniel Han**](https://x.com/danielhanchen) found it and fixed it within unsloth.
+essentially when you are adding micro batches you have to take care you normalize only by unpadded tokens.
+With slow drama from anon in big AI labs saying no AI lab uses HF as reference implementation.
+
+Zach Muller put nice TLDR: [https://x.com/TheZachMueller/status/1847021850586476919](https://x.com/TheZachMueller/status/1847021850586476919)
+
+
+
+[Read the blog post](https://unsloth.ai/blog/gradient)
+
+### **Efficient Dictionary Learning with Switch Sparse Autoencoders**
+
+![Screenshot of Switch SAE architecture](/static/images/Screenshot_2024-11-25_at_9.05.33_PM.png)
+
+Replace SAE up down matrix with MoE. It works but I don't like it, you are essentially doing double gating. 1st MoE gate and 2nd activation gate this is forced deactivation of some neurons, but it's computationally efficient so good option for GPU poor or extra large models I guess.
+
+[Read the paper](https://arxiv.org/abs/2410.08201)
+
+### **Differential Transformer**
+
+![Screenshot of Differential Transformer architecture](/static/images/Screenshot_2024-11-26_at_11.57.46_PM.png)
+
+Ided is create two attention matix substract one from other, this will reduces attenion noise and outlier.
+while theoretically this makde sense, I have doubt it will increase in performance. is because of diffing, 
+also when you get to really long context softmax forces you to have really small attention scores.
+i think is likly bcs of rms norm applied after attention. (which they show group norm in paper for some reason)
+it look like one of cases where adding structure improves performance in short term,
+
+
+claims looks legit, code is open source so i will test it what going on here.
+
+[Read the paper](https://arxiv.org/abs/2410.18174)
+
+
+
+### **Fitting an Elephant with Four non-Zero Parameters**
+
+![Screenshot of elephant fitting](/static/images/eleph.png)
+
+we can create elephant with 4 parameters, 
+
+is it useful? no. but it's fun.
+isnt that why we do science?
+
+[Read the paper](https://arxiv.org/pdf/2407.07909)
+
+

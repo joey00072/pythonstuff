@@ -16,12 +16,12 @@ const discussUrl = (path) =>
 
 const tweetUrl = (path, title) => {
   const encodedTitle = encodeURIComponent(`Check out this article: ${title}`)
-  let encodedUrl = encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)
+  let encodedUrl = encodeURIComponent(`${siteMetadata.siteUrl}/${path} \n\n`)
 
   // Replace %2D with -
   encodedUrl = encodedUrl.replace(/%2D/g, '-')
 
-  return `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`
+  return `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}\n`
 }
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
