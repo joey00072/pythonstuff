@@ -16,26 +16,220 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
   height = 600,
   cellSize = 8,
   opacity = 0.1,
-  speed = 200,
+  speed = 5,
   className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationFrameRef = useRef<number>()
   const lastUpdateRef = useRef<number>(0)
+  const generationRef = useRef<number>(0)
   const [dimensions, setDimensions] = useState({ width, height })
 
   const cols = Math.floor(dimensions.width / cellSize)
   const rows = Math.floor(dimensions.height / cellSize)
 
-  // Initialize grid with random pattern
+  // Initialize grid with gliders from top and bottom
   const createGrid = useCallback(() => {
-    return Array(rows)
+    const grid = Array(rows)
       .fill(null)
-      .map(() =>
-        Array(cols)
-          .fill(null)
-          .map(() => (Math.random() > 0.7 ? 1 : 0))
-      )
+      .map(() => Array(cols).fill(0))
+
+    // Add downward-moving gliders randomly in first 50 rows
+    const numDownGliders = Math.floor(cols / 5) // Roughly one glider per 5 columns
+    const downGliderPositions: { col: number; row: number }[] = []
+
+    for (let i = 0; i < numDownGliders; i++) {
+      let attempts = 0
+      let placed = false
+
+      while (!placed && attempts < 50) {
+        const col = Math.floor(Math.random() * (cols - 10)) + 3
+        const row = Math.floor(Math.random() * Math.min(50, rows - 3))
+
+        // Check distance from other gliders (minimum 15 cells apart)
+        const tooClose = downGliderPositions.some(
+          (pos) => Math.abs(pos.col - col) < 15 || Math.abs(pos.row - row) < 4
+        )
+
+        if (!tooClose && col + 2 < cols && row + 2 < rows) {
+          // Downward-moving glider pattern
+          grid[row][col + 1] = 1
+          grid[row + 1][col + 2] = 1
+          grid[row + 2][col] = 1
+          grid[row + 2][col + 1] = 1
+          grid[row + 2][col + 2] = 1
+
+          downGliderPositions.push({ col, row })
+          placed = true
+        }
+        attempts++
+      }
+    }
+
+    // Add upward-moving gliders randomly in last 50 rows
+    const numUpGliders = Math.floor(cols / 5)
+    const upGliderPositions: { col: number; row: number }[] = []
+
+    for (let i = 0; i < numUpGliders; i++) {
+      let attempts = 0
+      let placed = false
+
+      while (!placed && attempts < 50) {
+        const col = Math.floor(Math.random() * (cols - 10)) + 3
+        const row =
+          Math.max(rows - 50, 2) +
+          Math.floor(Math.random() * Math.min(50, rows - Math.max(rows - 50, 2) - 3))
+
+        // Check distance from other gliders (minimum 15 cells apart)
+        const tooClose = upGliderPositions.some(
+          (pos) => Math.abs(pos.col - col) < 15 || Math.abs(pos.row - row) < 4
+        )
+
+        if (!tooClose && col + 2 < cols && row + 2 < rows) {
+          // Upward-moving glider pattern (flipped)
+          grid[row + 2][col + 1] = 1
+          grid[row + 1][col] = 1
+          grid[row][col] = 1
+          grid[row][col + 1] = 1
+          grid[row][col + 2] = 1
+
+          upGliderPositions.push({ col, row })
+          placed = true
+        }
+        attempts++
+      }
+    }
+
+    // Add rightward-moving gliders from left side
+    const numRightGliders = Math.floor(rows / 15)
+    const rightGliderPositions: { col: number; row: number }[] = []
+
+    for (let i = 0; i < numRightGliders; i++) {
+      let attempts = 0
+      let placed = false
+
+      while (!placed && attempts < 50) {
+        const col = Math.floor(Math.random() * Math.min(15, cols - 10)) + 3
+        const row = Math.floor(Math.random() * (rows - 10)) + 5
+
+        // Check distance from other gliders (minimum 15 cells apart)
+        const tooClose = rightGliderPositions.some(
+          (pos) => Math.abs(pos.col - col) < 4 || Math.abs(pos.row - row) < 15
+        )
+
+        if (!tooClose && col + 2 < cols && row + 1 < rows && row - 1 >= 0) {
+          // Rightward-moving glider pattern
+          grid[row - 1][col] = 1
+          grid[row][col + 1] = 1
+          grid[row + 1][col - 1] = 1
+          grid[row + 1][col] = 1
+          grid[row + 1][col + 1] = 1
+
+          rightGliderPositions.push({ col, row })
+          placed = true
+        }
+        attempts++
+      }
+    }
+
+    // Add leftward-moving gliders from right side
+    const numLeftGliders = Math.floor(rows / 15)
+    const leftGliderPositions: { col: number; row: number }[] = []
+
+    for (let i = 0; i < numLeftGliders; i++) {
+      let attempts = 0
+      let placed = false
+
+      while (!placed && attempts < 50) {
+        const col =
+          Math.max(cols - 15, 10) +
+          Math.floor(Math.random() * Math.min(15, cols - Math.max(cols - 15, 10) - 3))
+        const row = Math.floor(Math.random() * (rows - 10)) + 5
+
+        // Check distance from other gliders (minimum 15 cells apart)
+        const tooClose = leftGliderPositions.some(
+          (pos) => Math.abs(pos.col - col) < 4 || Math.abs(pos.row - row) < 15
+        )
+
+        if (!tooClose && col - 2 >= 0 && row + 1 < rows && row - 1 >= 0) {
+          // Leftward-moving glider pattern
+          grid[row - 1][col] = 1
+          grid[row][col - 1] = 1
+          grid[row + 1][col + 1] = 1
+          grid[row + 1][col] = 1
+          grid[row + 1][col - 1] = 1
+
+          leftGliderPositions.push({ col, row })
+          placed = true
+        }
+        attempts++
+      }
+    }
+
+    // Add stable blocks in the middle
+    const centerRow = Math.floor(rows / 2)
+    const centerCol = Math.floor(cols / 2)
+
+    // Add many stable blocks (2x2 squares) in the center area
+    const blockPositions = [
+      { row: centerRow - 10, col: centerCol - 10 },
+      { row: centerRow + 10, col: centerCol + 10 },
+      { row: centerRow - 10, col: centerCol + 10 },
+      { row: centerRow + 10, col: centerCol - 10 },
+      { row: centerRow, col: centerCol },
+      { row: centerRow - 5, col: centerCol - 5 },
+      { row: centerRow + 5, col: centerCol + 5 },
+      { row: centerRow - 5, col: centerCol + 5 },
+      { row: centerRow + 5, col: centerCol - 5 },
+      { row: centerRow - 15, col: centerCol },
+      { row: centerRow + 15, col: centerCol },
+      { row: centerRow, col: centerCol - 15 },
+      { row: centerRow, col: centerCol + 15 },
+      { row: centerRow - 8, col: centerCol - 8 },
+      { row: centerRow + 8, col: centerCol + 8 },
+      { row: centerRow - 8, col: centerCol + 8 },
+      { row: centerRow + 8, col: centerCol - 8 },
+    ]
+
+    blockPositions.forEach(({ row, col }) => {
+      if (row >= 0 && row + 1 < rows && col >= 0 && col + 1 < cols) {
+        // Create a stable 2x2 block
+        grid[row][col] = 1
+        grid[row][col + 1] = 1
+        grid[row + 1][col] = 1
+        grid[row + 1][col + 1] = 1
+      }
+    })
+
+    // Add more beehive patterns (also stable) around the center
+    const beehivePositions = [
+      { row: centerRow - 20, col: centerCol - 15 },
+      { row: centerRow + 20, col: centerCol + 15 },
+      { row: centerRow - 20, col: centerCol + 15 },
+      { row: centerRow + 20, col: centerCol - 15 },
+      { row: centerRow - 25, col: centerCol - 10 },
+      { row: centerRow + 25, col: centerCol + 10 },
+      { row: centerRow - 25, col: centerCol + 10 },
+      { row: centerRow + 25, col: centerCol - 10 },
+      { row: centerRow - 12, col: centerCol - 25 },
+      { row: centerRow + 12, col: centerCol + 25 },
+      { row: centerRow - 12, col: centerCol + 25 },
+      { row: centerRow + 12, col: centerCol - 25 },
+    ]
+
+    beehivePositions.forEach(({ row, col }) => {
+      if (row >= 0 && row + 3 < rows && col >= 0 && col + 3 < cols) {
+        // Create a beehive pattern (stable)
+        grid[row][col + 1] = 1
+        grid[row][col + 2] = 1
+        grid[row + 1][col] = 1
+        grid[row + 1][col + 3] = 1
+        grid[row + 2][col + 1] = 1
+        grid[row + 2][col + 2] = 1
+      }
+    })
+
+    return grid
   }, [rows, cols])
 
   const [grid, setGrid] = useState(() => createGrid())
@@ -60,7 +254,9 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
   // Apply Game of Life rules
   const nextGeneration = useCallback(
     (currentGrid: number[][]) => {
-      return currentGrid.map((row, y) =>
+      generationRef.current += 1
+
+      let newGrid = currentGrid.map((row, y) =>
         row.map((cell, x) => {
           const neighbors = countNeighbors(currentGrid, x, y)
           if (cell === 1) {
@@ -70,8 +266,41 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
           }
         })
       )
+
+      // Add new gliders randomly every 100 generations
+      if (generationRef.current % 100 === 0) {
+        // Create a downward-moving glider in random top area
+        const topRow = Math.floor(Math.random() * Math.min(20, rows - 3)) + 3
+        const topCol = Math.floor(Math.random() * Math.min(30, cols - 3)) + 3
+
+        if (topRow + 2 < rows && topCol + 2 < cols) {
+          newGrid[topRow][topCol + 1] = 1
+          newGrid[topRow + 1][topCol + 2] = 1
+          newGrid[topRow + 2][topCol] = 1
+          newGrid[topRow + 2][topCol + 1] = 1
+          newGrid[topRow + 2][topCol + 2] = 1
+        }
+
+        // Create an upward-moving glider in random bottom area
+        const bottomRow =
+          Math.max(rows - 20, 5) +
+          Math.floor(Math.random() * Math.min(20, rows - Math.max(rows - 20, 5) - 3))
+        const bottomCol =
+          Math.max(cols - 30, 5) +
+          Math.floor(Math.random() * Math.min(30, cols - Math.max(cols - 30, 5) - 3))
+
+        if (bottomRow - 2 >= 0 && bottomCol - 2 >= 0 && bottomRow < rows && bottomCol < cols) {
+          newGrid[bottomRow - 2][bottomCol - 1] = 1
+          newGrid[bottomRow - 1][bottomCol - 2] = 1
+          newGrid[bottomRow][bottomCol - 2] = 1
+          newGrid[bottomRow][bottomCol - 1] = 1
+          newGrid[bottomRow][bottomCol] = 1
+        }
+      }
+
+      return newGrid
     },
-    [countNeighbors]
+    [countNeighbors, rows, cols]
   )
 
   // Draw the grid

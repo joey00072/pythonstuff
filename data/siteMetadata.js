@@ -5,7 +5,7 @@ const siteMetadata = {
   headerTitle: 'PythonStuff',
   description: 'A blog created AI, Python and other things I find interesting.',
   language: 'en-us',
-  theme: 'dark', // system, dark or light
+  theme: 'system', // system, dark or light
   siteUrl: 'https://pythonstuff.com',
   siteRepo: 'https://github.com/joey00072/pythonstuff',
   siteLogo: '/static/images/logo.png',
