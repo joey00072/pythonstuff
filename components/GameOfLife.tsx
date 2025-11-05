@@ -24,6 +24,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
   const lastUpdateRef = useRef<number>(0)
   const generationRef = useRef<number>(0)
   const [dimensions, setDimensions] = useState({ width, height })
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
   const cols = Math.floor(dimensions.width / cellSize)
   const rows = Math.floor(dimensions.height / cellSize)
@@ -35,7 +36,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
       .map(() => Array(cols).fill(0))
 
     // Add downward-moving gliders randomly in first 50 rows
-    const numDownGliders = Math.floor(cols / 5) // Roughly one glider per 5 columns
+    const numDownGliders = Math.floor(cols / 40) // Further reduced: roughly one glider per 40 columns
     const downGliderPositions: { col: number; row: number }[] = []
 
     for (let i = 0; i < numDownGliders; i++) {
@@ -67,7 +68,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
     }
 
     // Add upward-moving gliders randomly in last 50 rows
-    const numUpGliders = Math.floor(cols / 5)
+    const numUpGliders = Math.floor(cols / 40) // Further reduced
     const upGliderPositions: { col: number; row: number }[] = []
 
     for (let i = 0; i < numUpGliders; i++) {
@@ -101,7 +102,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
     }
 
     // Add rightward-moving gliders from left side
-    const numRightGliders = Math.floor(rows / 15)
+    const numRightGliders = Math.floor(rows / 60) // Further reduced
     const rightGliderPositions: { col: number; row: number }[] = []
 
     for (let i = 0; i < numRightGliders; i++) {
@@ -133,7 +134,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
     }
 
     // Add leftward-moving gliders from right side
-    const numLeftGliders = Math.floor(rows / 15)
+    const numLeftGliders = Math.floor(rows / 60) // Further reduced
     const leftGliderPositions: { col: number; row: number }[] = []
 
     for (let i = 0; i < numLeftGliders; i++) {
@@ -167,67 +168,10 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
     }
 
     // Add stable blocks in the middle
-    const centerRow = Math.floor(rows / 2)
-    const centerCol = Math.floor(cols / 2)
+    // Removed static blocks for cleaner animation
 
-    // Add many stable blocks (2x2 squares) in the center area
-    const blockPositions = [
-      { row: centerRow - 10, col: centerCol - 10 },
-      { row: centerRow + 10, col: centerCol + 10 },
-      { row: centerRow - 10, col: centerCol + 10 },
-      { row: centerRow + 10, col: centerCol - 10 },
-      { row: centerRow, col: centerCol },
-      { row: centerRow - 5, col: centerCol - 5 },
-      { row: centerRow + 5, col: centerCol + 5 },
-      { row: centerRow - 5, col: centerCol + 5 },
-      { row: centerRow + 5, col: centerCol - 5 },
-      { row: centerRow - 15, col: centerCol },
-      { row: centerRow + 15, col: centerCol },
-      { row: centerRow, col: centerCol - 15 },
-      { row: centerRow, col: centerCol + 15 },
-      { row: centerRow - 8, col: centerCol - 8 },
-      { row: centerRow + 8, col: centerCol + 8 },
-      { row: centerRow - 8, col: centerCol + 8 },
-      { row: centerRow + 8, col: centerCol - 8 },
-    ]
-
-    blockPositions.forEach(({ row, col }) => {
-      if (row >= 0 && row + 1 < rows && col >= 0 && col + 1 < cols) {
-        // Create a stable 2x2 block
-        grid[row][col] = 1
-        grid[row][col + 1] = 1
-        grid[row + 1][col] = 1
-        grid[row + 1][col + 1] = 1
-      }
-    })
-
-    // Add more beehive patterns (also stable) around the center
-    const beehivePositions = [
-      { row: centerRow - 20, col: centerCol - 15 },
-      { row: centerRow + 20, col: centerCol + 15 },
-      { row: centerRow - 20, col: centerCol + 15 },
-      { row: centerRow + 20, col: centerCol - 15 },
-      { row: centerRow - 25, col: centerCol - 10 },
-      { row: centerRow + 25, col: centerCol + 10 },
-      { row: centerRow - 25, col: centerCol + 10 },
-      { row: centerRow + 25, col: centerCol - 10 },
-      { row: centerRow - 12, col: centerCol - 25 },
-      { row: centerRow + 12, col: centerCol + 25 },
-      { row: centerRow - 12, col: centerCol + 25 },
-      { row: centerRow + 12, col: centerCol - 25 },
-    ]
-
-    beehivePositions.forEach(({ row, col }) => {
-      if (row >= 0 && row + 3 < rows && col >= 0 && col + 3 < cols) {
-        // Create a beehive pattern (stable)
-        grid[row][col + 1] = 1
-        grid[row][col + 2] = 1
-        grid[row + 1][col] = 1
-        grid[row + 1][col + 3] = 1
-        grid[row + 2][col + 1] = 1
-        grid[row + 2][col + 2] = 1
-      }
-    })
+    // Add fewer beehive patterns (also stable) around the center
+    // Removed beehive patterns for cleaner animation
 
     return grid
   }, [rows, cols])
@@ -267,8 +211,8 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
         })
       )
 
-      // Add new gliders randomly every 100 generations
-      if (generationRef.current % 100 === 0) {
+      // Add new gliders randomly every 200 generations (reduced frequency)
+      if (generationRef.current % 200 === 0) {
         // Create a downward-moving glider in random top area
         const topRow = Math.floor(Math.random() * Math.min(20, rows - 3)) + 3
         const topCol = Math.floor(Math.random() * Math.min(30, cols - 3)) + 3
@@ -312,8 +256,11 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
+      // Use lighter color and higher opacity in dark mode
+      const color = isDarkMode ? `rgba(229, 231, 235, ${opacity * 1.2})` : `rgba(59, 130, 246, ${opacity})` // Light gray in dark mode, blue in light mode
+
       ctx.clearRect(0, 0, dimensions.width, dimensions.height)
-      ctx.fillStyle = `rgba(59, 130, 246, ${opacity})` // Blue color with opacity
+      ctx.fillStyle = color
 
       grid.forEach((row, y) => {
         row.forEach((cell, x) => {
@@ -323,7 +270,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
         })
       })
     },
-    [dimensions.width, dimensions.height, cellSize, opacity]
+    [dimensions.width, dimensions.height, cellSize, opacity, isDarkMode]
   )
 
   // Animation loop
@@ -341,6 +288,24 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
     },
     [speed, nextGeneration, draw]
   )
+
+  // Check initial dark mode state and listen for theme changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'))
+    }
+
+    checkDarkMode()
+
+    // Listen for theme changes
+    const observer = new MutationObserver(checkDarkMode)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
   // Handle window resize
   useEffect(() => {
@@ -372,6 +337,11 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
   useEffect(() => {
     setGrid(createGrid())
   }, [createGrid])
+
+  // Redraw when theme changes
+  useEffect(() => {
+    draw(grid)
+  }, [isDarkMode, draw, grid])
 
   // Initial draw
   useEffect(() => {

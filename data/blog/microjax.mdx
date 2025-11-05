@@ -414,7 +414,7 @@ $$
 This equality holds true because matrix multiplication is associative.
 
 
-## Jacobian-Vector Product (JVP)
+### Jacobian-Vector Product (JVP)
 
 The Jacobian-Vector Product, or forward-mode autodiff, computes the product of the Jacobian matrix and a vector:
 
@@ -455,7 +455,7 @@ $$
 
 VJP propagates derivatives backward through the computational graph, from outputs to inputs. This is the basis for the backpropagation algorithm commonly used in training neural networks.
 
-### Forward Mode Autodiff (JVP)
+## Forward Mode Autodiff
 
 forward mode auto diff really easy. we will box values and its derivative (init 1). as we calculate function in forward direction we will also calculate its derivative. 
 
@@ -693,7 +693,7 @@ plt.show()
     
 
 
-## Reverse Mode Automatic Differentiation (VJP)
+## Reverse Mode AutoDiff
 
 In way add added extra infomation via boxing values with tangent in jvp, in vjp we will add extra infomation node. this will create graph that can be traversed in reverse direction. Hance reverse mode autodiff.
 
@@ -814,7 +814,7 @@ class VJPRules:
 
 VJP box where we box primals and its nodes 
 
-
+### VJP Interpreter
 ```python
 class VJPBox(Box):
     def __init__(self, interpreter: VJPInterpreter, primal, node: Node) -> None:
@@ -977,7 +977,7 @@ plt.show()
     
 
 
-### Function composition
+## Function composition
 
 since jvp and vjp are both defined in terms of primitive functions, you can do backward on forward mode autodiff.
 
@@ -1543,7 +1543,7 @@ print(grads)
     {'bias': 1.0, 'weights': [0.3, 0.5, 0.7]}
 ```
 
-# vmap, pmap and jit
+## vmap, pmap and jit
 I am not going to cover this, its microjax after all. but to give you intuition, in way we added tangents for jvp and node for vjp, for vmap we box shape infomation,
 write batching interpreter, and do `lambda x: [f(x[0]) for _ in range(x.shape[0])] ` at rules level, yes its just map. if you do this map parallel you get pmap,
 

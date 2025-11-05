@@ -14,7 +14,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
   return (
     <>
-      <GameOfLife cellSize={12} opacity={0.15} speed={30} className="dark:opacity-25" />
+      <GameOfLife cellSize={12} opacity={0.15} speed={30} />
       <div className="relative">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
           <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14">
