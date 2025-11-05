@@ -2,7 +2,7 @@ import Image from './Image'
 import Link from './Link'
 
 const Card = ({ title, description, imgSrc, href }) => (
-  <div className="w-full p-4 sm:w-1/2 lg:w-1/3 xl:w-1/3">
+  <div className="w-full p-4 sm:w-1/2 lg:w-1/2 xl:w-1/2">
     <div
       className={`${
         imgSrc && 'h-full'
