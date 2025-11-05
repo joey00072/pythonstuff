@@ -16,17 +16,19 @@ export default function Projects() {
             Things I&apos;ve built
           </p>
         </div>
-        <div className="container py-12">
-          <div className="-m-4 flex flex-wrap">
-            {projectsData.map((d) => (
-              <Card
-                key={d.title}
-                title={d.title}
-                description={d.description}
-                imgSrc={d.imgSrc}
-                href={d.href}
-              />
-            ))}
+        <div className="w-screen relative left-1/2 -translate-x-1/2">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="-m-4 flex flex-wrap">
+              {projectsData.map((d) => (
+                <Card
+                  key={d.title}
+                  title={d.title}
+                  description={d.description}
+                  imgSrc={d.imgSrc}
+                  href={d.href}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
