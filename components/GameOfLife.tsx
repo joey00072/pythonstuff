@@ -298,6 +298,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = ({
     checkDarkMode()
 
     // Listen for theme changes
+    // eslint-disable-next-line no-undef
     const observer = new MutationObserver(checkDarkMode)
     observer.observe(document.documentElement, {
       attributes: true,

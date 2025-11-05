@@ -24,6 +24,7 @@ export default function TOCSidebar({ toc }: TOCSidebarProps) {
       threshold: 0,
     }
 
+    // eslint-disable-next-line no-undef
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -32,6 +33,7 @@ export default function TOCSidebar({ toc }: TOCSidebarProps) {
       })
     }
 
+    // eslint-disable-next-line no-undef
     const observer = new IntersectionObserver(observerCallback, observerOptions)
 
     // Observe introduction section (content before first heading)
