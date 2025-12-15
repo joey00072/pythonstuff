@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "pythonstuff.com"
+        }
+      ],
+      "destination": "https://joey00072.com/$1",
+      "permanent": true
+    }
+  ]
+}
